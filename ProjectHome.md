@@ -1,0 +1,1 @@
+Alternative firmware for Rainbowduino that features master/slave communications channel, and drawing primitives over i2c.
