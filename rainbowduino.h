@@ -40,9 +40,13 @@ typedef struct {
 } rgb_triplet_t;
 
 void clear_buffer( void );
+void fill_buffer( uint8_t red, uint8_t green, uint8_t blue );
 void show_buffer( void );
 void draw_pixel_rgb( uint8_t col, uint8_t row, uint8_t red, uint8_t green, uint8_t blue );
 void draw_pixel( uint8_t col, uint8_t row );
+
+void do_periodic_task( void );
+void process_wire_command( void );
 
 #endif
 

@@ -1,6 +1,6 @@
 #include <math.h>
 #include <stdint.h>
-#include <WProgram.h>
+#include <Arduino.h>
 #include "rainbowduino.h"
 
 /*
@@ -92,7 +92,7 @@ void plasma_effect ( )
 				 + sin(dist(col, row, 192.0, 100.0) / 8.0);
 			hsv.h = (uint8_t)((temp) * 128) & 0xFF;
 			hsv.s = 255;
-			hsv.v = 32;
+			hsv.v = 16;
 			hsv_to_rgb( &hsv, &rgb );
 			draw_pixel_rgb( col, row, rgb.r, rgb.g, rgb.b );
 		}
@@ -157,9 +157,12 @@ void enter_the_matrix ( void )
 	show_buffer( );
 }
 
+static uint16_t frames = 0;
 void do_periodic_task( void )
 {
-	enter_the_matrix( );
+	if ( frames > 5000 ) plasma_effect( );
+	else enter_the_matrix( );
+	if ( ++frames > 5100 ) frames = 0;
 }
 
 /* vim: set noexpandtab tabstop=4 shiftwidth=4 nolist autoindent cindent: */

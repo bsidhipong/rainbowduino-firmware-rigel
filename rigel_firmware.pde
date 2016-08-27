@@ -105,7 +105,7 @@ byte ink_green = 0x88;
 byte ink_blue = 0x00;
 
 /* internal character set (read-only, in program memory space) */
-uint8_t ASCII_Char[62][8] __attribute__((__progmem__)) = {
+const uint8_t ASCII_Char[62][8] __attribute__((__progmem__)) = {
     { 0x0,0x38,0x44,0x4C,0x54,0x64,0x44,0x38 },   // 0
     { 0x0,0x38,0x10,0x10,0x10,0x10,0x18,0x10 },   // 1
     { 0x0,0x7C,0x8,0x10,0x20,0x40,0x44,0x38 },    // 2
@@ -183,24 +183,24 @@ volatile enum {
 void handle_request_event ( void )
 {
 	/* send our current state when the master requests it */
-	Wire.send( state );
+	/* Wire.send( state ); */
 	if ( state == synchronize_with_master ) state = wait_for_command; /* break the main event loop */
 }
 
 void handle_receive_event ( int how_many )
 {
+#if 0
 	uint8_t index = 0;
 	while ( Wire.available() ) {
 		i2c_buffer[index] = Wire.receive( );
 		if ( index < MAX_WIRE_CMD_LEN ) index++;
 	}
 	state = process_command;
+#endif
 }
 
 void loop ( void )
 {
-	void do_periodic_task( void );
-
 	switch ( state ) {
 	case wait_for_command:
 		/* BIG TASKS:
@@ -248,9 +248,21 @@ void draw_pixel_rgb ( uint8_t col, uint8_t row, uint8_t red, uint8_t green, uint
 	ptr->blue = blue;
 }
 
-void clear_buffer ( void )
+void clear_buffer( void )
 {
 	memset( frame_buffers[draw], 0, sizeof(rgbframe_t) );
+}
+
+void fill_buffer( uint8_t red, uint8_t green, uint8_t blue )
+{
+    register uint8_t pixel = 64;
+	register rgb_triplet_t *ptr = &frame_buffers[draw][0];
+	while ( pixel-- ) {
+		ptr->red = red;
+		ptr->green = green;
+		ptr->blue = blue;
+		ptr++;
+	}
 }
 
 void show_buffer ( void )
@@ -299,16 +311,19 @@ void setup ( void )
 	   |  1   |  1   |  1   | /1024              |
 	   +------+------+------+--------------------+ */
 #if 0
-	/* prescale/128 */
-	TCCR2B |=   (1 << CS21);
-	TCCR2B &= ~((1 << CS22)||(1 << CS20));
 	/* prescaler/32 */
 	TCCR2B |=  ((1 << CS21)|(1 << CS20));
 	TCCR2B &=  ~(1 << CS22);
-#endif
 	/* prescaler/64 */
 	TCCR2B |=   (1 << CS22);
 	TCCR2B &= ~((1 << CS21)|(1 << CS20));
+	/* prescale/128 */
+	TCCR2B |=   (1 << CS21);
+	TCCR2B &= ~((1 << CS22)||(1 << CS20));
+#endif
+	/* prescale/256 */
+	TCCR2B |=   (1 << CS21);
+	TCCR2B &= ~((1 << CS22)||(0 << CS20));
 	/* internal clock source */
 	ASSR &= ~(1 << AS2);
 	/* set up i2c subsystem once we're ready to accept commands */
@@ -390,7 +405,7 @@ ISR ( TIMER2_OVF_vect )
 	/* after flashing all LED's scan_lines, go back to scan_line 0 and increase the brightness_level */
 	scan_line = (++scan_line % 8);
 	/* swap buffer when brightness goes back to zero */
-	if ( brightness_level++ == 32 ) {
+	if ( brightness_level++ == 16 ) {
 		brightness_level = 0;
 		refresh = view;
 	}
